@@ -98,9 +98,10 @@ public class AdvancedEmpDeptTests
     {
         var emps = Database.GetEmps();
 
-        // var result = null;
-        //
-        // Assert.Contains(result, r => r.Employee == "SMITH" && r.Manager == "FORD");
+        var result = emps.Join(emps, e1 => e1.Mgr, e2 => e2.EmpNo,
+            (e1, e2) => new { Employee = e1.EName, Manager = e2.EName });
+        
+        Assert.Contains(result, r => r.Employee == "SMITH" && r.Manager == "FORD");
     }
 
     // 19. Let clause usage (sal + comm)
@@ -110,9 +111,13 @@ public class AdvancedEmpDeptTests
     {
         var emps = Database.GetEmps();
 
-        // var result = null; 
-        //
-        // Assert.Contains(result, r => r.EName == "ALLEN" && r.Total == 1900);
+        var result = emps.Select(e => new
+        {
+            e.EName,
+            Total = e.Sal + (e.Comm ?? 0)
+        }).ToList();
+        
+         Assert.Contains(result, r => r.EName == "ALLEN" && r.Total == 1900);
     }
 
     // 20. Join all three: Emp → Dept → Salgrade
@@ -124,8 +129,13 @@ public class AdvancedEmpDeptTests
         var depts = Database.GetDepts();
         var grades = Database.GetSalgrades();
 
-        // var result = null; 
-        //
-        // Assert.Contains(result, r => r.EName == "ALLEN" && r.DName == "SALES" && r.Grade == 3);
+        var result = (from e in emps
+            from s in grades
+            join d in depts on e.DeptNo equals d.DeptNo
+            where e.Sal >= s.Losal && e.Sal <= s.Hisal
+            select new { e.EName, d.DName, s.Grade }).ToList();
+             
+        
+         Assert.Contains(result, r => r.EName == "ALLEN" && r.DName == "SALES" && r.Grade == 3);
     }
 }
